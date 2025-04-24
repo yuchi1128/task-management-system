@@ -1,0 +1,147 @@
+openapi: 3.0.3
+info:
+  title: Task Management API
+  version: 1.0.0
+paths:
+  /tasks:
+    get:
+      summary: タスクの一覧を取得
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [NotStarted, InProgress, Completed]
+        - name: name
+          in: query
+          schema:
+            type: string
+        - name: description
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [priority, end_date]
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Task"
+                  total:
+                    type: integer
+    post:
+      summary: タスクを作成
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: タスク作成成功
+  /tasks/{id}:
+    get:
+      summary: タスクの詳細を取得
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    put:
+      summary: タスクを更新
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "200":
+          description: タスク更新成功
+    delete:
+      summary: タスクを削除
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: タスク削除成功
+components:
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        priority:
+          type: string
+          enum: [High, Middle, Low]
+        status:
+          type: string
+          enum: [NotStarted, InProgress, Completed]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    TaskInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        priority:
+          type: string
+          enum: [High, Middle, Low]
+        status:
+          type: string
+          enum: [NotStarted, InProgress, Completed]
