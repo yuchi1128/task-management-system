@@ -1,18 +1,20 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { getTasks } from '@/lib/api';
-import { Container, Typography } from '@mui/material';
+import { Container, Typography, Button } from '@mui/material';
+import TaskForm from '@/components/TaskForm';
 
 export default function Home() {
-  // Tanstack Queryでタスクを取得
+  const [openForm, setOpenForm] = useState(false);
+
   const { data: tasks = [], isLoading, error } = useQuery({
     queryKey: ['tasks'],
     queryFn: getTasks,
   });
 
-  // DataGridのカラム定義
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'name', headerName: 'Name', width: 200 },
@@ -30,6 +32,14 @@ export default function Home() {
       <Typography variant="h4" gutterBottom>
         Task Management
       </Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => setOpenForm(true)}
+        sx={{ mb: 2 }}
+      >
+        Create Task
+      </Button>
       {error && <Typography color="error">Error: {error.message}</Typography>}
       {isLoading ? (
         <Typography>Loading...</Typography>
@@ -44,6 +54,7 @@ export default function Home() {
           />
         </div>
       )}
+      <TaskForm open={openForm} onClose={() => setOpenForm(false)} />
     </Container>
   );
 }
