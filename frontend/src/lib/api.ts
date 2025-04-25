@@ -37,7 +37,7 @@ export interface TaskInput {
 // APIメソッド
 export const getTasks = async (): Promise<Task[]> => {
   const response = await api.get('/tasks');
-  return response.data.tasks; // バックエンドは { tasks: Task[], total: number } を返す
+  return response.data.tasks;
 };
 
 export const createTask = async (task: TaskInput): Promise<void> => {
