@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { getTasks } from '@/lib/api';
+import { getTasks, Task } from '@/lib/api';
 import { Container, Typography, Button } from '@mui/material';
 import TaskForm from '@/components/TaskForm';
+import TaskActions from '@/components/TaskActions';
 
 export default function Home() {
   const [openForm, setOpenForm] = useState(false);
@@ -25,6 +26,12 @@ export default function Home() {
     { field: 'end_date', headerName: 'End Date', width: 150 },
     { field: 'created_at', headerName: 'Created At', width: 150 },
     { field: 'updated_at', headerName: 'Updated At', width: 150 },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 100,
+      renderCell: (params) => <TaskActions task={params.row as Task} />,
+    },
   ];
 
   return (
