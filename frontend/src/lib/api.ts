@@ -3,7 +3,6 @@ import axios, { AxiosInstance } from 'axios';
 // バックエンドのベースURL
 const API_BASE_URL = 'http://localhost:8080';
 
-// Axiosインスタンスを作成
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -11,7 +10,6 @@ const api: AxiosInstance = axios.create({
   },
 });
 
-// タスクの型定義（バックエンドのapi.Taskと一致）
 export interface Task {
   id: number;
   name: string;
@@ -24,7 +22,6 @@ export interface Task {
   updated_at: string;
 }
 
-// タスク作成・更新用の入力型
 export interface TaskInput {
   name: string;
   description?: string;

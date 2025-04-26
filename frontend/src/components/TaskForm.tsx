@@ -15,6 +15,7 @@ import {
   InputLabel,
   FormControl,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 interface TaskFormProps {
   open: boolean;
@@ -26,6 +27,8 @@ export default function TaskForm({ open, onClose }: TaskFormProps) {
   const [formData, setFormData] = useState<TaskInput>({
     name: '',
     description: '',
+    start_date: '',
+    end_date: '',
     priority: 'High',
     status: 'NotStarted',
   });
@@ -33,9 +36,9 @@ export default function TaskForm({ open, onClose }: TaskFormProps) {
   const mutation = useMutation({
     mutationFn: createTask,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] }); // タスク一覧を再取得
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       onClose();
-      setFormData({ name: '', description: '', priority: 'High', status: 'NotStarted' });
+      setFormData({ name: '', description: '', start_date: '', end_date: '', priority: 'High', status: 'NotStarted' });
     },
     onError: (error) => {
       console.error('Error creating task:', error);
@@ -48,31 +51,22 @@ export default function TaskForm({ open, onClose }: TaskFormProps) {
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Create Task</DialogTitle>
+      <DialogTitle>タスクの作成</DialogTitle>
       <DialogContent>
         <TextField
-          label="Name"
+          label="タスク名"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           fullWidth
           margin="dense"
           required
         />
-        <TextField
-          label="Description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          fullWidth
-          margin="dense"
-          multiline
-          rows={4}
-        />
         <FormControl fullWidth margin="dense">
-          <InputLabel>Priority</InputLabel>
+          <InputLabel>優先度</InputLabel>
           <Select
             value={formData.priority}
             onChange={(e) => setFormData({ ...formData, priority: e.target.value as TaskInput['priority'] })}
-            label="Priority"
+            label="優先度"
           >
             <MenuItem value="High">High</MenuItem>
             <MenuItem value="Middle">Middle</MenuItem>
@@ -80,22 +74,43 @@ export default function TaskForm({ open, onClose }: TaskFormProps) {
           </Select>
         </FormControl>
         <FormControl fullWidth margin="dense">
-          <InputLabel>Status</InputLabel>
+          <InputLabel>ステータス</InputLabel>
           <Select
             value={formData.status}
             onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskInput['status'] })}
-            label="Status"
+            label="ステータス"
           >
-            <MenuItem value="NotStarted">Not Started</MenuItem>
-            <MenuItem value="InProgress">In Progress</MenuItem>
-            <MenuItem value="Completed">Completed</MenuItem>
+            <MenuItem value="NotStarted">未着手</MenuItem>
+            <MenuItem value="InProgress">着手</MenuItem>
+            <MenuItem value="Completed">完了</MenuItem>
           </Select>
         </FormControl>
+        <DatePicker
+          label="開始日"
+          value={formData.start_date ? new Date(formData.start_date) : null}
+          onChange={(date) => setFormData({ ...formData, start_date: date ? date.toISOString() : '' })}
+          slotProps={{ textField: { fullWidth: true, margin: 'dense' } }}
+        />
+        <DatePicker
+          label="終了日"
+          value={formData.end_date ? new Date(formData.end_date) : null}
+          onChange={(date) => setFormData({ ...formData, end_date: date ? date.toISOString() : '' })}
+          slotProps={{ textField: { fullWidth: true, margin: 'dense' } }}
+        />
+        <TextField
+          label="説明文"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          fullWidth
+          margin="dense"
+          multiline
+          rows={4}
+        />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>キャンセル</Button>
         <Button onClick={handleSubmit} disabled={mutation.isPending}>
-          {mutation.isPending ? 'Creating...' : 'Create'}
+          {mutation.isPending ? '作成中...' : '作成'}
         </Button>
       </DialogActions>
     </Dialog>

@@ -17,18 +17,15 @@ export default function Home() {
   });
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 90 },
-    { field: 'name', headerName: 'Name', width: 200 },
-    { field: 'description', headerName: 'Description', width: 200 },
-    { field: 'priority', headerName: 'Priority', width: 120 },
-    { field: 'status', headerName: 'Status', width: 120 },
-    { field: 'start_date', headerName: 'Start Date', width: 150 },
-    { field: 'end_date', headerName: 'End Date', width: 150 },
-    { field: 'created_at', headerName: 'Created At', width: 150 },
-    { field: 'updated_at', headerName: 'Updated At', width: 150 },
+    { field: 'name', headerName: 'タスク名', width: 200 },
+    { field: 'priority', headerName: '優先度', width: 120 },
+    { field: 'status', headerName: 'ステータス', width: 120 },
+    { field: 'start_date', headerName: '開始日', width: 150 },
+    { field: 'end_date', headerName: '終了日', width: 150 },
+    { field: 'description', headerName: '説明文', width: 200 },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: 'アクション',
       width: 100,
       renderCell: (params) => <TaskActions task={params.row as Task} />,
     },
@@ -37,7 +34,7 @@ export default function Home() {
   return (
     <Container sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom>
-        Task Management
+        TODOアプリ
       </Typography>
       <Button
         variant="contained"
@@ -45,11 +42,11 @@ export default function Home() {
         onClick={() => setOpenForm(true)}
         sx={{ mb: 2 }}
       >
-        Create Task
+        タスクを作成
       </Button>
       {error && <Typography color="error">Error: {error.message}</Typography>}
       {isLoading ? (
-        <Typography>Loading...</Typography>
+        <Typography>ローディング...</Typography>
       ) : (
         <div style={{ height: 400, width: '100%' }}>
           <DataGrid

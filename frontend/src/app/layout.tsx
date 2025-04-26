@@ -1,8 +1,10 @@
-'use client'; // クライアントコンポーネントとして指定
+'use client';
 
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,7 +20,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <QueryClientProvider client={queryClient}>
-          {children}
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            {children}
+          </LocalizationProvider>
         </QueryClientProvider>
       </body>
     </html>
