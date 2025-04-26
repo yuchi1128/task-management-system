@@ -1,0 +1,55 @@
+import axios, { AxiosInstance } from 'axios';
+
+// バックエンドのベースURL
+const API_BASE_URL = 'http://localhost:8080';
+
+const api: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export interface Task {
+  id: number;
+  name: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  priority: 'High' | 'Middle' | 'Low';
+  status: 'NotStarted' | 'InProgress' | 'Completed';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskInput {
+  name: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  priority: 'High' | 'Middle' | 'Low';
+  status: 'NotStarted' | 'InProgress' | 'Completed';
+}
+
+// APIメソッド
+export const getTasks = async (): Promise<Task[]> => {
+  const response = await api.get('/tasks');
+  return response.data.tasks;
+};
+
+export const createTask = async (task: TaskInput): Promise<void> => {
+  await api.post('/tasks', task);
+};
+
+export const getTask = async (id: number): Promise<Task> => {
+  const response = await api.get(`/tasks/${id}`);
+  return response.data;
+};
+
+export const updateTask = async (id: number, task: TaskInput): Promise<void> => {
+  await api.put(`/tasks/${id}`, task);
+};
+
+export const deleteTask = async (id: number): Promise<void> => {
+  await api.delete(`/tasks/${id}`);
+};

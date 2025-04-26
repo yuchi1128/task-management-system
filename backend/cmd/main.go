@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/rs/cors"
 	"github.com/yuchi1128/task-management-system/backend/internal/handlers"
 )
 
@@ -26,7 +27,15 @@ func main() {
 	router.HandleFunc("/tasks/{id:[0-9]+}", taskHandler.UpdateTask).Methods("PUT")
 	router.HandleFunc("/tasks/{id:[0-9]+}", taskHandler.DeleteTask).Methods("DELETE")
 
-	// サーバーを起動
+	// CORSミドルウェアを適用
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Accept", "Origin", "Authorization"},
+		AllowCredentials: true,
+	}).Handler(router)
+
+	// サーバーを起動（CORSハンドラを使用）
 	log.Println("Server starting on :8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":8080", corsHandler))
 }
