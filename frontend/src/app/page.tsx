@@ -7,6 +7,7 @@ import { getTasks, Task } from '@/lib/api';
 import { Container, Typography, Button } from '@mui/material';
 import TaskForm from '@/components/TaskForm';
 import TaskActions from '@/components/TaskActions';
+import { format, parseISO } from 'date-fns';
 
 export default function Home() {
   const [openForm, setOpenForm] = useState(false);
@@ -16,13 +17,32 @@ export default function Home() {
     queryFn: getTasks,
   });
 
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '';
+    try {
+      return format(parseISO(dateString), 'yyyy/M/d');
+    } catch {
+      return dateString;
+    }
+  };
+
   const columns: GridColDef[] = [
-    { field: 'name', headerName: 'タスク名', width: 200 },
-    { field: 'priority', headerName: '優先度', width: 120 },
-    { field: 'status', headerName: 'ステータス', width: 120 },
-    { field: 'start_date', headerName: '開始日', width: 150 },
-    { field: 'end_date', headerName: '終了日', width: 150 },
-    { field: 'description', headerName: '説明文', width: 200 },
+    { field: 'name', headerName: 'タスク名', width: 150 },
+    { field: 'priority', headerName: '優先度', width: 100 },
+    { field: 'status', headerName: 'ステータス', width: 100 },
+    { 
+      field: 'start_date', 
+      headerName: '開始日', 
+      width: 100,
+      renderCell: (params) => formatDate(params.value)
+    },
+    { 
+      field: 'end_date', 
+      headerName: '終了日', 
+      width: 100,
+      renderCell: (params) => formatDate(params.value)
+    },
+    { field: 'description', headerName: '説明文', width: 300, flex: 1 },
     {
       field: 'actions',
       headerName: 'アクション',
@@ -38,9 +58,9 @@ export default function Home() {
       </Typography>
       <Button
         variant="contained"
-        color="primary"
+        color="inherit"
         onClick={() => setOpenForm(true)}
-        sx={{ mb: 2 }}
+        sx={{ mb: 2, bgcolor: '#e0e0e0' }}
       >
         タスクを作成
       </Button>
