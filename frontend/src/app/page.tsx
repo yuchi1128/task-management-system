@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DataGrid, GridColDef, GridSortModel } from '@mui/x-data-grid';
 import { getTasks, Task } from '@/lib/api';
-import { Container, Typography, Button, Box, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Container, Typography, Button, Box, TextField, FormControl, InputLabel, Select, MenuItem, Pagination, SelectChangeEvent } from '@mui/material';
 import TaskForm from '@/components/TaskForm';
 import TaskActions from '@/components/TaskActions';
 import { format, parseISO } from 'date-fns';
@@ -22,12 +22,13 @@ export default function Home() {
     endDateTo: null as Date | null
   });
   
-  // ソートモデルの状態
   const [sortModel, setSortModel] = useState<GridSortModel>([
     { field: 'priority', sort: 'asc' }
   ]);
 
-  // 検索条件をリセットするハンドラー
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  
   const handleResetFilters = () => {
     setSearchParams({
       name: '',
@@ -53,9 +54,7 @@ export default function Home() {
     }
   };
 
-  // 検索フィルターの適用
   const filteredTasks = tasks.filter(task => {
-    // 基本的なテキストと選択フィルター
     const basicFiltersPassed = (
       (searchParams.name === '' || task.name.toLowerCase().includes(searchParams.name.toLowerCase())) &&
       (searchParams.description === '' || 
@@ -64,7 +63,6 @@ export default function Home() {
       (searchParams.status === '' || task.status === searchParams.status)
     );
     
-    // 終了日の範囲フィルター
     let dateFilterPassed = true;
     if (searchParams.endDateFrom || searchParams.endDateTo) {
       const taskEndDate = task.end_date ? new Date(task.end_date).getTime() : null;
@@ -138,6 +136,23 @@ export default function Home() {
     }));
   };
 
+  // ページネーションの変更ハンドラー
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+  };
+
+  // ページサイズを変更するための関数
+  const handlePageSizeChange = (event: SelectChangeEvent<number>) => {
+    setPageSize(Number(event.target.value));
+    setPage(1); // ページサイズ変更時には1ページ目に戻る
+  };
+  
+  // 表示用のデータをページネーションに合わせてスライス
+  const paginatedTasks = filteredTasks.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
   return (
     <Container sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom>
@@ -152,7 +167,6 @@ export default function Home() {
         タスクを作成
       </Button>
 
-      {/* 検索フィルターコンポーネント */}
       <Box sx={{ mb: 2 }}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 1 }}>
           <TextField 
@@ -199,7 +213,6 @@ export default function Home() {
           </FormControl>
         </Box>
         
-        {/* 終了日の範囲フィルター */}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 1 }}>
           <DatePicker
             label="終了日（から）"
@@ -225,7 +238,6 @@ export default function Home() {
           />
         </Box>
         
-        {/* ソートボタン */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <FormControl size="small" sx={{ minWidth: '200px' }}>
             <InputLabel>並び替え</InputLabel>
@@ -246,7 +258,6 @@ export default function Home() {
             </Select>
           </FormControl>
           
-          {/* リセットボタン */}
           <Button 
             variant="outlined" 
             size="small" 
@@ -262,17 +273,45 @@ export default function Home() {
       {isLoading ? (
         <Typography>ローディング...</Typography>
       ) : (
-        <div style={{ height: 400, width: '100%' }}>
-          <DataGrid
-            rows={filteredTasks}
-            columns={columns}
-            pageSizeOptions={[10]}
-            checkboxSelection
-            disableRowSelectionOnClick
-            sortModel={sortModel}
-            onSortModelChange={(model) => setSortModel(model)}
-          />
-        </div>
+        <>
+          <div style={{ height: 400, width: '100%' }}>
+            <DataGrid
+              rows={paginatedTasks}
+              columns={columns}
+              disableRowSelectionOnClick
+              sortModel={sortModel}
+              onSortModelChange={(model) => setSortModel(model)}
+              hideFooter // フッターを非表示にする
+            />
+          </div>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, alignItems: 'center', gap: 2 }}>
+            <FormControl size="small" sx={{ minWidth: '80px' }}>
+              <Select
+                value={pageSize}
+                onChange={handlePageSizeChange}
+                size="small"
+              >
+                <MenuItem value={10}>10件</MenuItem>
+                <MenuItem value={25}>25件</MenuItem>
+                <MenuItem value={50}>50件</MenuItem>
+              </Select>
+            </FormControl>
+            
+            <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+              <Pagination
+                count={Math.ceil(filteredTasks.length / pageSize)}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                showFirstButton
+                showLastButton
+              />
+            </Box>
+            
+            <Box sx={{ minWidth: '80px' }}></Box>
+          </Box>
+        </>
       )}
       <TaskForm open={openForm} onClose={() => setOpenForm(false)} />
     </Container>
