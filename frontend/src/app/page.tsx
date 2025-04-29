@@ -10,6 +10,8 @@ import TaskActions from '@/components/TaskActions';
 import { format, parseISO } from 'date-fns';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { DatePicker } from '@mui/x-date-pickers';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
 export default function Home() {
   const [openForm, setOpenForm] = useState(false);
@@ -69,19 +71,15 @@ export default function Home() {
       
       if (taskEndDate) {
         if (searchParams.endDateFrom && searchParams.endDateTo) {
-          // 両方の日付が設定されている場合
           const fromTime = searchParams.endDateFrom.getTime();
           const toTime = searchParams.endDateTo.getTime();
           dateFilterPassed = taskEndDate >= fromTime && taskEndDate <= toTime;
         } else if (searchParams.endDateFrom) {
-          // 開始日のみ設定
           dateFilterPassed = taskEndDate >= searchParams.endDateFrom.getTime();
         } else if (searchParams.endDateTo) {
-          // 終了日のみ設定
           dateFilterPassed = taskEndDate <= searchParams.endDateTo.getTime();
         }
       } else {
-        // タスクに終了日がなく、フィルターが設定されている場合は除外
         dateFilterPassed = false;
       }
     }
@@ -90,25 +88,41 @@ export default function Home() {
   });
 
   const columns: GridColDef[] = [
-    { field: 'name', headerName: 'タスク名', width: 150, sortable: true },
-    { field: 'priority', headerName: '優先度', width: 100, sortable: true },
-    { field: 'status', headerName: 'ステータス', width: 100, sortable: true },
-    { 
-      field: 'start_date', 
-      headerName: '開始日', 
-      width: 100,
-      renderCell: (params) => formatDate(params.value),
+    {
+      field: 'name',
+      headerName: 'タスク名',
+      width: 150,
       sortable: true,
-      sortComparator: (v1, v2) => {
-        if (!v1 && !v2) return 0;
-        if (!v1) return -1;
-        if (!v2) return 1;
-        return new Date(v1).getTime() - new Date(v2).getTime();
-      }
     },
-    { 
-      field: 'end_date', 
-      headerName: '終了日', 
+    {
+      field: 'priority',
+      headerName: '優先度',
+      width: 100,
+      sortable: true,
+      renderHeader: () => {
+        const sortIdx = sortModel.findIndex(s => s.field === 'priority');
+        const sort = sortModel[sortIdx];
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            優先度
+            {sort && (
+              sort.sort === 'asc'
+                ? <ArrowUpwardIcon fontSize="small" color={sortIdx === 0 ? "primary" : "action"} />
+                : <ArrowDownwardIcon fontSize="small" color={sortIdx === 0 ? "primary" : "action"} />
+            )}
+          </Box>
+        );
+      },
+    },
+    {
+      field: 'status',
+      headerName: 'ステータス',
+      width: 100,
+      sortable: true,
+    },
+    {
+      field: 'start_date',
+      headerName: '開始日',
       width: 100,
       renderCell: (params) => formatDate(params.value),
       sortable: true,
@@ -117,7 +131,48 @@ export default function Home() {
         if (!v1) return -1;
         if (!v2) return 1;
         return new Date(v1).getTime() - new Date(v2).getTime();
-      }
+      },
+      renderHeader: () => {
+        const sortIdx = sortModel.findIndex(s => s.field === 'start_date');
+        const sort = sortModel[sortIdx];
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            開始日
+            {sort && (
+              sort.sort === 'asc'
+                ? <ArrowUpwardIcon fontSize="small" color={sortIdx === 0 ? "primary" : "action"} />
+                : <ArrowDownwardIcon fontSize="small" color={sortIdx === 0 ? "primary" : "action"} />
+            )}
+          </Box>
+        );
+      },
+    },
+    {
+      field: 'end_date',
+      headerName: '終了日',
+      width: 100,
+      renderCell: (params) => formatDate(params.value),
+      sortable: true,
+      sortComparator: (v1, v2) => {
+        if (!v1 && !v2) return 0;
+        if (!v1) return -1;
+        if (!v2) return 1;
+        return new Date(v1).getTime() - new Date(v2).getTime();
+      },
+      renderHeader: () => {
+        const sortIdx = sortModel.findIndex(s => s.field === 'end_date');
+        const sort = sortModel[sortIdx];
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            終了日
+            {sort && (
+              sort.sort === 'asc'
+                ? <ArrowUpwardIcon fontSize="small" color={sortIdx === 0 ? "primary" : "action"} />
+                : <ArrowDownwardIcon fontSize="small" color={sortIdx === 0 ? "primary" : "action"} />
+            )}
+          </Box>
+        );
+      },
     },
     { field: 'description', headerName: '説明文', width: 300, flex: 1, sortable: true },
     {
@@ -136,19 +191,87 @@ export default function Home() {
     }));
   };
 
-  // ページネーションの変更ハンドラー
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
   };
 
-  // ページサイズを変更するための関数
   const handlePageSizeChange = (event: SelectChangeEvent<number>) => {
     setPageSize(Number(event.target.value));
-    setPage(1); // ページサイズ変更時には1ページ目に戻る
+    setPage(1);
   };
-  
+
+  // ソート可能なカラム
+  const sortableFields = [
+    { value: 'priority', label: '優先度' },
+    { value: 'end_date', label: '終了日' },
+    { value: 'start_date', label: '開始日' },
+  ];
+
+  // ソート条件を追加
+  const handleAddSort = () => {
+    // 未選択のフィールドを追加
+    const unused = sortableFields.find(f => !sortModel.some(s => s.field === f.value));
+    if (unused) {
+      setSortModel([...sortModel, { field: unused.value, sort: 'asc' }]);
+    }
+  };
+
+  // ソート条件を削除
+  const handleRemoveSort = (idx: number) => {
+    setSortModel(sortModel.filter((_, i) => i !== idx));
+  };
+
+  // ソート条件の順序を変更
+  const handleMoveSort = (idx: number, dir: 'up' | 'down') => {
+    const newModel = [...sortModel];
+    const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= newModel.length) return;
+    [newModel[idx], newModel[swapIdx]] = [newModel[swapIdx], newModel[idx]];
+    setSortModel(newModel);
+  };
+
+  // ソート条件の変更
+  const handleSortFieldChange = (idx: number, field: string) => {
+    const newModel = [...sortModel];
+    newModel[idx].field = field;
+    setSortModel(newModel);
+  };
+  const handleSortOrderChange = (idx: number, order: 'asc' | 'desc') => {
+    const newModel = [...sortModel];
+    newModel[idx].sort = order;
+    setSortModel(newModel);
+  };
+
+  // 多段ソート関数
+  function multiSort(tasks: Task[], sortModel: GridSortModel) {
+    return [...tasks].sort((a, b) => {
+      for (const sort of sortModel) {
+        let aValue = a[sort.field as keyof Task];
+        let bValue = b[sort.field as keyof Task];
+
+        // 日付フィールドはDateで比較
+        if (sort.field === 'start_date' || sort.field === 'end_date') {
+          aValue = aValue ? new Date(aValue as string).getTime() : 0;
+          bValue = bValue ? new Date(bValue as string).getTime() : 0;
+        }
+
+        // 優先度はHigh > Middle > Lowで比較
+        if (sort.field === 'priority') {
+          const priorityOrder: Record<string, number> = { High: 3, Middle: 2, Low: 1 };
+          aValue = priorityOrder[aValue as string] || 0;
+          bValue = priorityOrder[bValue as string] || 0;
+        }
+
+        if (aValue < bValue) return sort.sort === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sort.sort === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+
   // 表示用のデータをページネーションに合わせてスライス
-  const paginatedTasks = filteredTasks.slice(
+  const sortedTasks = multiSort(filteredTasks, sortModel);
+  const paginatedTasks = sortedTasks.slice(
     (page - 1) * pageSize,
     page * pageSize
   );
@@ -239,25 +362,6 @@ export default function Home() {
         </Box>
         
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <FormControl size="small" sx={{ minWidth: '200px' }}>
-            <InputLabel>並び替え</InputLabel>
-            <Select
-              value={sortModel.length > 0 ? `${sortModel[0].field}:${sortModel[0].sort}` : ''}
-              onChange={(e) => {
-                const [field, sort] = e.target.value.split(':');
-                setSortModel([{ field, sort: sort as 'asc' | 'desc' }]);
-              }}
-              label="並び替え"
-            >
-              <MenuItem value="priority:asc">優先度（昇順）</MenuItem>
-              <MenuItem value="priority:desc">優先度（降順）</MenuItem>
-              <MenuItem value="end_date:asc">終了日（早い順）</MenuItem>
-              <MenuItem value="end_date:desc">終了日（遅い順）</MenuItem>
-              <MenuItem value="start_date:asc">開始日（早い順）</MenuItem>
-              <MenuItem value="start_date:desc">開始日（遅い順）</MenuItem>
-            </Select>
-          </FormControl>
-          
           <Button 
             variant="outlined" 
             size="small" 
@@ -267,6 +371,49 @@ export default function Home() {
             フィルターをリセット
           </Button>
         </Box>
+      </Box>
+
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle2" sx={{ mb: 1 }}>並び替え条件</Typography>
+        {sortModel.map((sort, idx) => (
+          <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>カラム</InputLabel>
+              <Select
+                value={sort.field}
+                label="カラム"
+                onChange={e => handleSortFieldChange(idx, e.target.value)}
+              >
+                {sortableFields.map(f => (
+                  <MenuItem
+                    key={f.value}
+                    value={f.value}
+                    disabled={sortModel.some((s, i) => s.field === f.value && i !== idx)}
+                  >
+                    {f.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 100 }}>
+              <InputLabel>順序</InputLabel>
+              <Select
+                value={sort.sort}
+                label="順序"
+                onChange={e => handleSortOrderChange(idx, e.target.value as 'asc' | 'desc')}
+              >
+                <MenuItem value="asc">昇順</MenuItem>
+                <MenuItem value="desc">降順</MenuItem>
+              </Select>
+            </FormControl>
+            <Button size="small" onClick={() => handleMoveSort(idx, 'up')} disabled={idx === 0}><ArrowUpwardIcon fontSize="small" /></Button>
+            <Button size="small" onClick={() => handleMoveSort(idx, 'down')} disabled={idx === sortModel.length - 1}><ArrowDownwardIcon fontSize="small" /></Button>
+            <Button size="small" color="error" onClick={() => handleRemoveSort(idx)}>削除</Button>
+          </Box>
+        ))}
+        {sortModel.length < sortableFields.length && (
+          <Button size="small" variant="outlined" onClick={handleAddSort}>条件を追加</Button>
+        )}
       </Box>
 
       {error && <Typography color="error">Error: {error.message}</Typography>}
@@ -279,7 +426,7 @@ export default function Home() {
               rows={paginatedTasks}
               columns={columns}
               disableRowSelectionOnClick
-              sortModel={sortModel}
+              sortModel={sortModel.length > 0 ? [sortModel[0]] : []}
               onSortModelChange={(model) => setSortModel(model)}
               hideFooter // フッターを非表示にする
             />
