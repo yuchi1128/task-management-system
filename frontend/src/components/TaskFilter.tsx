@@ -1,0 +1,129 @@
+'use client';
+
+import {
+  Box,
+  Typography,
+  TextField,
+  FormControl,
+  Select,
+  MenuItem,
+  Button,
+} from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+
+interface SearchParams {
+  name: string;
+  description: string;
+  priority: string;
+  status: string;
+  endDateFrom: Date | null;
+  endDateTo: Date | null;
+}
+
+interface TaskFilterProps {
+  searchParams: SearchParams;
+  onSearchChange: (field: string, value: string | Date | null) => void;
+  onResetFilters: () => void;
+}
+
+export default function TaskFilter({ 
+  searchParams, 
+  onSearchChange, 
+  onResetFilters 
+}: TaskFilterProps) {
+  return (
+    <Box sx={{ mb: 1.5 }}>
+      <Typography variant="subtitle2" sx={{ mb: 0.7, fontSize: 15 }}>
+        条件で検索
+      </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 1,
+          mb: 0.7,
+          border: '1px solid #e0e0e0',
+          backgroundColor: '#fafafa',
+          borderRadius: 2,
+          p: 1.2,
+        }}
+      >
+        <TextField
+          placeholder="タスク名"
+          size="small"
+          value={searchParams.name}
+          onChange={(e) => onSearchChange('name', e.target.value)}
+          sx={{ minWidth: 120, flex: 1 }}
+        />
+        <TextField
+          placeholder="説明文"
+          size="small"
+          value={searchParams.description}
+          onChange={(e) => onSearchChange('description', e.target.value)}
+          sx={{ minWidth: 120, flex: 1 }}
+        />
+        <FormControl size="small" sx={{ minWidth: 80 }}>
+          <Select
+            value={searchParams.priority}
+            onChange={(e) => onSearchChange('priority', e.target.value)}
+            displayEmpty
+          >
+            <MenuItem value="">優先度</MenuItem>
+            <MenuItem value="High">High</MenuItem>
+            <MenuItem value="Middle">Middle</MenuItem>
+            <MenuItem value="Low">Low</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 80 }}>
+          <Select
+            value={searchParams.status}
+            onChange={(e) => onSearchChange('status', e.target.value)}
+            displayEmpty
+          >
+            <MenuItem value="">ステータス</MenuItem>
+            <MenuItem value="NotStarted">未着手</MenuItem>
+            <MenuItem value="InProgress">着手</MenuItem>
+            <MenuItem value="Completed">完了</MenuItem>
+          </Select>
+        </FormControl>
+        <DatePicker
+          label={null}
+          value={searchParams.endDateFrom}
+          onChange={(date) => onSearchChange('endDateFrom', date)}
+          slotProps={{
+            textField: {
+              size: 'small',
+              placeholder: '終了日(から)',
+              sx: { minWidth: 90 },
+            },
+          }}
+        />
+        <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5 }}>
+          <Typography variant="body2" sx={{ color: '#888' }}>〜</Typography>
+        </Box>
+        <DatePicker
+          label={null}
+          value={searchParams.endDateTo}
+          onChange={(date) => onSearchChange('endDateTo', date)}
+          slotProps={{
+            textField: {
+              size: 'small',
+              placeholder: '終了日(まで)',
+              sx: { minWidth: 90 },
+            },
+          }}
+        />
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={onResetFilters}
+          startIcon={<RestartAltIcon />}
+          sx={{ whiteSpace: 'nowrap', px: 1.5, fontSize: 13 }}
+        >
+          リセット
+        </Button>
+      </Box>
+    </Box>
+  );
+}
