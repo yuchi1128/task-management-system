@@ -4,7 +4,19 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DataGrid, GridColDef, GridSortModel } from '@mui/x-data-grid';
 import { getTasks, Task } from '@/lib/api';
-import { Container, Typography, Button, Box, TextField, FormControl, InputLabel, Select, MenuItem, Pagination, SelectChangeEvent } from '@mui/material';
+import {
+  Container,
+  Typography,
+  Button,
+  Box,
+  TextField,
+  FormControl,
+  Select,
+  MenuItem,
+  Pagination,
+  SelectChangeEvent,
+  IconButton,
+} from '@mui/material';
 import TaskForm from '@/components/TaskForm';
 import TaskActions from '@/components/TaskActions';
 import { format, parseISO } from 'date-fns';
@@ -21,16 +33,16 @@ export default function Home() {
     priority: '',
     status: '',
     endDateFrom: null as Date | null,
-    endDateTo: null as Date | null
+    endDateTo: null as Date | null,
   });
-  
+
   const [sortModel, setSortModel] = useState<GridSortModel>([
-    { field: 'priority', sort: 'asc' }
+    { field: 'priority', sort: 'asc' },
   ]);
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  
+
   const handleResetFilters = () => {
     setSearchParams({
       name: '',
@@ -38,7 +50,7 @@ export default function Home() {
       priority: '',
       status: '',
       endDateFrom: null,
-      endDateTo: null
+      endDateTo: null,
     });
   };
 
@@ -56,19 +68,22 @@ export default function Home() {
     }
   };
 
-  const filteredTasks = tasks.filter(task => {
-    const basicFiltersPassed = (
-      (searchParams.name === '' || task.name.toLowerCase().includes(searchParams.name.toLowerCase())) &&
-      (searchParams.description === '' || 
-        (task.description && task.description.toLowerCase().includes(searchParams.description.toLowerCase()))) &&
+  const filteredTasks = tasks.filter((task) => {
+    const basicFiltersPassed =
+      (searchParams.name === '' ||
+        task.name.toLowerCase().includes(searchParams.name.toLowerCase())) &&
+      (searchParams.description === '' ||
+        (task.description &&
+          task.description
+            .toLowerCase()
+            .includes(searchParams.description.toLowerCase()))) &&
       (searchParams.priority === '' || task.priority === searchParams.priority) &&
-      (searchParams.status === '' || task.status === searchParams.status)
-    );
-    
+      (searchParams.status === '' || task.status === searchParams.status);
+
     let dateFilterPassed = true;
     if (searchParams.endDateFrom || searchParams.endDateTo) {
       const taskEndDate = task.end_date ? new Date(task.end_date).getTime() : null;
-      
+
       if (taskEndDate) {
         if (searchParams.endDateFrom && searchParams.endDateTo) {
           const fromTime = searchParams.endDateFrom.getTime();
@@ -83,7 +98,7 @@ export default function Home() {
         dateFilterPassed = false;
       }
     }
-    
+
     return basicFiltersPassed && dateFilterPassed;
   });
 
@@ -92,7 +107,7 @@ export default function Home() {
       field: 'name',
       headerName: 'タスク名',
       width: 150,
-      sortable: true,
+      sortable: false, // ソート不可に変更
     },
     {
       field: 'priority',
@@ -100,15 +115,23 @@ export default function Home() {
       width: 100,
       sortable: true,
       renderHeader: () => {
-        const sortIdx = sortModel.findIndex(s => s.field === 'priority');
+        const sortIdx = sortModel.findIndex((s) => s.field === 'priority');
         const sort = sortModel[sortIdx];
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             優先度
             {sort && (
-              sort.sort === 'asc'
-                ? <ArrowUpwardIcon fontSize="small" color={sortIdx === 0 ? "primary" : "action"} />
-                : <ArrowDownwardIcon fontSize="small" color={sortIdx === 0 ? "primary" : "action"} />
+              sort.sort === 'asc' ? (
+                <ArrowUpwardIcon
+                  fontSize="small"
+                  color={sortIdx === 0 ? 'primary' : 'action'}
+                />
+              ) : (
+                <ArrowDownwardIcon
+                  fontSize="small"
+                  color={sortIdx === 0 ? 'primary' : 'action'}
+                />
+              )
             )}
           </Box>
         );
@@ -118,7 +141,19 @@ export default function Home() {
       field: 'status',
       headerName: 'ステータス',
       width: 100,
-      sortable: true,
+      sortable: false, // ソート不可に変更
+      renderCell: (params) => {
+        switch (params.value) {
+          case 'NotStarted':
+            return '未着手';
+          case 'InProgress':
+            return '着手';
+          case 'Completed':
+            return '完了';
+          default:
+            return params.value;
+        }
+      },
     },
     {
       field: 'start_date',
@@ -133,15 +168,23 @@ export default function Home() {
         return new Date(v1).getTime() - new Date(v2).getTime();
       },
       renderHeader: () => {
-        const sortIdx = sortModel.findIndex(s => s.field === 'start_date');
+        const sortIdx = sortModel.findIndex((s) => s.field === 'start_date');
         const sort = sortModel[sortIdx];
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             開始日
             {sort && (
-              sort.sort === 'asc'
-                ? <ArrowUpwardIcon fontSize="small" color={sortIdx === 0 ? "primary" : "action"} />
-                : <ArrowDownwardIcon fontSize="small" color={sortIdx === 0 ? "primary" : "action"} />
+              sort.sort === 'asc' ? (
+                <ArrowUpwardIcon
+                  fontSize="small"
+                  color={sortIdx === 0 ? 'primary' : 'action'}
+                />
+              ) : (
+                <ArrowDownwardIcon
+                  fontSize="small"
+                  color={sortIdx === 0 ? 'primary' : 'action'}
+                />
+              )
             )}
           </Box>
         );
@@ -160,21 +203,35 @@ export default function Home() {
         return new Date(v1).getTime() - new Date(v2).getTime();
       },
       renderHeader: () => {
-        const sortIdx = sortModel.findIndex(s => s.field === 'end_date');
+        const sortIdx = sortModel.findIndex((s) => s.field === 'end_date');
         const sort = sortModel[sortIdx];
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             終了日
             {sort && (
-              sort.sort === 'asc'
-                ? <ArrowUpwardIcon fontSize="small" color={sortIdx === 0 ? "primary" : "action"} />
-                : <ArrowDownwardIcon fontSize="small" color={sortIdx === 0 ? "primary" : "action"} />
+              sort.sort === 'asc' ? (
+                <ArrowUpwardIcon
+                  fontSize="small"
+                  color={sortIdx === 0 ? 'primary' : 'action'}
+                />
+              ) : (
+                <ArrowDownwardIcon
+                  fontSize="small"
+                  color={sortIdx === 0 ? 'primary' : 'action'}
+                />
+              )
             )}
           </Box>
         );
       },
     },
-    { field: 'description', headerName: '説明文', width: 300, flex: 1, sortable: true },
+    {
+      field: 'description',
+      headerName: '説明文',
+      width: 300,
+      flex: 1,
+      sortable: false, // ソート不可に変更
+    },
     {
       field: 'actions',
       headerName: 'アクション',
@@ -185,9 +242,9 @@ export default function Home() {
   ];
 
   const handleSearchChange = (field: string, value: string | Date | null) => {
-    setSearchParams(prev => ({
+    setSearchParams((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -200,64 +257,54 @@ export default function Home() {
     setPage(1);
   };
 
-  // ソート可能なカラム
   const sortableFields = [
     { value: 'priority', label: '優先度' },
     { value: 'end_date', label: '終了日' },
     { value: 'start_date', label: '開始日' },
   ];
 
-  // ソート条件を追加
   const handleAddSort = () => {
-    // 未選択のフィールドを追加
-    const unused = sortableFields.find(f => !sortModel.some(s => s.field === f.value));
+    const unused = sortableFields.find(
+      (f) => !sortModel.some((s) => s.field === f.value)
+    );
     if (unused) {
       setSortModel([...sortModel, { field: unused.value, sort: 'asc' }]);
     }
   };
 
-  // ソート条件を削除
   const handleRemoveSort = (idx: number) => {
     setSortModel(sortModel.filter((_, i) => i !== idx));
   };
 
-  // ソート条件の順序を変更
-  const handleMoveSort = (idx: number, dir: 'up' | 'down') => {
-    const newModel = [...sortModel];
-    const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= newModel.length) return;
-    [newModel[idx], newModel[swapIdx]] = [newModel[swapIdx], newModel[idx]];
-    setSortModel(newModel);
-  };
-
-  // ソート条件の変更
   const handleSortFieldChange = (idx: number, field: string) => {
     const newModel = [...sortModel];
     newModel[idx].field = field;
     setSortModel(newModel);
   };
+
   const handleSortOrderChange = (idx: number, order: 'asc' | 'desc') => {
     const newModel = [...sortModel];
     newModel[idx].sort = order;
     setSortModel(newModel);
   };
 
-  // 多段ソート関数
   function multiSort(tasks: Task[], sortModel: GridSortModel) {
     return [...tasks].sort((a, b) => {
       for (const sort of sortModel) {
         let aValue = a[sort.field as keyof Task];
         let bValue = b[sort.field as keyof Task];
 
-        // 日付フィールドはDateで比較
         if (sort.field === 'start_date' || sort.field === 'end_date') {
           aValue = aValue ? new Date(aValue as string).getTime() : 0;
           bValue = bValue ? new Date(bValue as string).getTime() : 0;
         }
 
-        // 優先度はHigh > Middle > Lowで比較
         if (sort.field === 'priority') {
-          const priorityOrder: Record<string, number> = { High: 3, Middle: 2, Low: 1 };
+          const priorityOrder: Record<string, number> = {
+            High: 3,
+            Middle: 2,
+            Low: 1,
+          };
           aValue = priorityOrder[aValue as string] || 0;
           bValue = priorityOrder[bValue as string] || 0;
         }
@@ -269,7 +316,6 @@ export default function Home() {
     });
   }
 
-  // 表示用のデータをページネーションに合わせてスライス
   const sortedTasks = multiSort(filteredTasks, sortModel);
   const paginatedTasks = sortedTasks.slice(
     (page - 1) * pageSize,
@@ -277,143 +323,167 @@ export default function Home() {
   );
 
   return (
-    <Container sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        TODOアプリ
-      </Typography>
-      <Button
-        variant="contained"
-        color="inherit"
-        onClick={() => setOpenForm(true)}
-        sx={{ mb: 2, bgcolor: '#e0e0e0' }}
-      >
-        タスクを作成
-      </Button>
-
-      <Box sx={{ mb: 2 }}>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 1 }}>
-          <TextField 
-            label="タスク名で検索" 
-            variant="outlined" 
+    <Container sx={{ mt: 2, mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4" sx={{ flex: 1, fontWeight: 'bold', fontSize: 30 }}>
+          TODOアプリ
+        </Typography>
+        <Button
+          variant="contained"
+          color="inherit"
+          onClick={() => setOpenForm(true)}
+          sx={{ bgcolor: '#e0e0e0', fontSize: 14, py: 0.7, px: 2.5, minWidth: 0 }}
+        >
+          タスクを作成
+        </Button>
+      </Box>
+      <Box sx={{ mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ mb: 0.7, fontSize: 15 }}>
+          条件で検索
+        </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 1,
+            mb: 0.7,
+            border: '1px solid #e0e0e0',
+            backgroundColor: '#fafafa',
+            borderRadius: 2,
+            p: 1.2,
+          }}
+        >
+          <TextField
+            placeholder="タスク名"
             size="small"
             value={searchParams.name}
             onChange={(e) => handleSearchChange('name', e.target.value)}
-            sx={{ flexGrow: 1, minWidth: '150px' }}
+            sx={{ minWidth: 120, flex: 1 }}
           />
-          <TextField 
-            label="説明文で検索" 
-            variant="outlined" 
+          <TextField
+            placeholder="説明文"
             size="small"
             value={searchParams.description}
             onChange={(e) => handleSearchChange('description', e.target.value)}
-            sx={{ flexGrow: 1, minWidth: '150px' }}
+            sx={{ minWidth: 120, flex: 1 }}
           />
-          <FormControl sx={{ minWidth: '120px' }} size="small">
-            <InputLabel>優先度</InputLabel>
+          <FormControl size="small" sx={{ minWidth: 80 }}>
             <Select
               value={searchParams.priority}
               onChange={(e) => handleSearchChange('priority', e.target.value)}
-              label="優先度"
+              displayEmpty
             >
-              <MenuItem value="">すべて</MenuItem>
+              <MenuItem value="">優先度</MenuItem>
               <MenuItem value="High">High</MenuItem>
               <MenuItem value="Middle">Middle</MenuItem>
               <MenuItem value="Low">Low</MenuItem>
             </Select>
           </FormControl>
-          <FormControl sx={{ minWidth: '120px' }} size="small">
-            <InputLabel>ステータス</InputLabel>
+          <FormControl size="small" sx={{ minWidth: 80 }}>
             <Select
               value={searchParams.status}
               onChange={(e) => handleSearchChange('status', e.target.value)}
-              label="ステータス"
+              displayEmpty
             >
-              <MenuItem value="">すべて</MenuItem>
+              <MenuItem value="">ステータス</MenuItem>
               <MenuItem value="NotStarted">未着手</MenuItem>
               <MenuItem value="InProgress">着手</MenuItem>
               <MenuItem value="Completed">完了</MenuItem>
             </Select>
           </FormControl>
-        </Box>
-        
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 1 }}>
           <DatePicker
-            label="終了日（から）"
+            label={null}
             value={searchParams.endDateFrom}
             onChange={(date) => handleSearchChange('endDateFrom', date)}
             slotProps={{
               textField: {
                 size: 'small',
-                sx: { minWidth: '150px' }
-              }
+                placeholder: '終了日(から)',
+                sx: { minWidth: 90 }, // ← ここを90など小さく
+              },
             }}
           />
+          <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5 }}>
+            <Typography variant="body2" sx={{ color: '#888' }}>〜</Typography>
+          </Box>
           <DatePicker
-            label="終了日（まで）"
+            label={null}
             value={searchParams.endDateTo}
             onChange={(date) => handleSearchChange('endDateTo', date)}
             slotProps={{
               textField: {
                 size: 'small',
-                sx: { minWidth: '150px' }
-              }
+                placeholder: '終了日(まで)',
+                sx: { minWidth: 90 }, // ← ここも同様に
+              },
             }}
           />
-        </Box>
-        
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Button 
-            variant="outlined" 
-            size="small" 
+          <Button
+            variant="outlined"
+            size="small"
             onClick={handleResetFilters}
             startIcon={<RestartAltIcon />}
+            sx={{ whiteSpace: 'nowrap', px: 1.5, fontSize: 13 }}
           >
-            フィルターをリセット
+            リセット
           </Button>
         </Box>
       </Box>
 
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>並び替え条件</Typography>
-        {sortModel.map((sort, idx) => (
-          <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>カラム</InputLabel>
-              <Select
-                value={sort.field}
-                label="カラム"
-                onChange={e => handleSortFieldChange(idx, e.target.value)}
+      <Box sx={{ mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ mb: 0.7, fontSize: 15 }}>
+          並び替え（左から優先度順）
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1.2, alignItems: 'center', flexWrap: 'wrap' }}>
+          {sortModel.map((sort, idx) => (
+            <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Typography variant="caption" sx={{ fontWeight: 'bold', minWidth: 16 }}>
+                {idx + 1}.
+              </Typography>
+              <FormControl size="small" sx={{ minWidth: 80 }}>
+                <Select
+                  value={sort.field}
+                  onChange={(e) => handleSortFieldChange(idx, e.target.value)}
+                >
+                  {sortableFields.map((f) => (
+                    <MenuItem
+                      key={f.value}
+                      value={f.value}
+                      disabled={sortModel.some(
+                        (s, i) => s.field === f.value && i !== idx
+                      )}
+                    >
+                      {f.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 60 }}>
+                <Select
+                  value={sort.sort}
+                  onChange={(e) =>
+                    handleSortOrderChange(idx, e.target.value as 'asc' | 'desc')
+                  }
+                >
+                  <MenuItem value="asc">昇順</MenuItem>
+                  <MenuItem value="desc">降順</MenuItem>
+                </Select>
+              </FormControl>
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => handleRemoveSort(idx)}
               >
-                {sortableFields.map(f => (
-                  <MenuItem
-                    key={f.value}
-                    value={f.value}
-                    disabled={sortModel.some((s, i) => s.field === f.value && i !== idx)}
-                  >
-                    {f.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 100 }}>
-              <InputLabel>順序</InputLabel>
-              <Select
-                value={sort.sort}
-                label="順序"
-                onChange={e => handleSortOrderChange(idx, e.target.value as 'asc' | 'desc')}
-              >
-                <MenuItem value="asc">昇順</MenuItem>
-                <MenuItem value="desc">降順</MenuItem>
-              </Select>
-            </FormControl>
-            <Button size="small" onClick={() => handleMoveSort(idx, 'up')} disabled={idx === 0}><ArrowUpwardIcon fontSize="small" /></Button>
-            <Button size="small" onClick={() => handleMoveSort(idx, 'down')} disabled={idx === sortModel.length - 1}><ArrowDownwardIcon fontSize="small" /></Button>
-            <Button size="small" color="error" onClick={() => handleRemoveSort(idx)}>削除</Button>
-          </Box>
-        ))}
-        {sortModel.length < sortableFields.length && (
-          <Button size="small" variant="outlined" onClick={handleAddSort}>条件を追加</Button>
-        )}
+                <span style={{ fontWeight: 'bold' }}>×</span>
+              </IconButton>
+            </Box>
+          ))}
+          {sortModel.length < sortableFields.length && (
+            <Button size="small" variant="outlined" onClick={handleAddSort} sx={{ px: 1.5, fontSize: 13 }}>
+              ＋条件追加
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {error && <Typography color="error">Error: {error.message}</Typography>}
@@ -421,30 +491,35 @@ export default function Home() {
         <Typography>ローディング...</Typography>
       ) : (
         <>
-          <div style={{ height: 400, width: '100%' }}>
+          <div style={{ width: '100%' }}>
             <DataGrid
               rows={paginatedTasks}
               columns={columns}
               disableRowSelectionOnClick
               sortModel={sortModel.length > 0 ? [sortModel[0]] : []}
               onSortModelChange={(model) => setSortModel(model)}
-              hideFooter // フッターを非表示にする
+              hideFooter
+              disableColumnMenu
             />
           </div>
-          
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, alignItems: 'center', gap: 2 }}>
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              mt: 2,
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
             <FormControl size="small" sx={{ minWidth: '80px' }}>
-              <Select
-                value={pageSize}
-                onChange={handlePageSizeChange}
-                size="small"
-              >
+              <Select value={pageSize} onChange={handlePageSizeChange} size="small">
                 <MenuItem value={10}>10件</MenuItem>
                 <MenuItem value={25}>25件</MenuItem>
                 <MenuItem value={50}>50件</MenuItem>
               </Select>
             </FormControl>
-            
+
             <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
               <Pagination
                 count={Math.ceil(filteredTasks.length / pageSize)}
@@ -455,7 +530,7 @@ export default function Home() {
                 showLastButton
               />
             </Box>
-            
+
             <Box sx={{ minWidth: '80px' }}></Box>
           </Box>
         </>
