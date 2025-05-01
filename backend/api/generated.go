@@ -57,32 +57,34 @@ const (
 	Priority GetTasksParamsSort = "priority"
 )
 
-// Task defines model for Task.
-
-// type Task struct {
-// 	CreatedAt   *time.Time    `json:"created_at,omitempty"`
-// 	Description *string       `json:"description,omitempty"`
-// 	EndDate     *time.Time    `json:"end_date,omitempty"`
-// 	Id          *int          `json:"id,omitempty"`
-// 	Name        *string       `json:"name,omitempty"`
-// 	Priority    *TaskPriority `json:"priority,omitempty"`
-// 	StartDate   *time.Time    `json:"start_date,omitempty"`
-// 	Status      *TaskStatus   `json:"status,omitempty"`
-// 	UpdatedAt   *time.Time    `json:"updated_at,omitempty"`
-// }
-
-type Task struct {
-    CreatedAt   *time.Time    `json:"created_at,omitempty" db:"created_at"`
-    Description *string       `json:"description,omitempty" db:"description"`
-    EndDate     *time.Time    `json:"end_date,omitempty" db:"end_date"`
-    Id          *int          `json:"id,omitempty" db:"id"`
-    Name        *string       `json:"name,omitempty" db:"name"`
-    Priority    *TaskPriority `json:"priority,omitempty" db:"priority"`
-    StartDate   *time.Time    `json:"start_date,omitempty" db:"start_date"`
-    Status      *TaskStatus   `json:"status,omitempty" db:"status"`
-    UpdatedAt   *time.Time    `json:"updated_at,omitempty" db:"updated_at"`
+// Label defines model for Label.
+type Label struct {
+	ID        int       `json:"id" db:"id"`
+	Name      string    `json:"name" db:"name"`
+	Color     string    `json:"color" db:"color"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
+// LabelInput defines model for LabelInput.
+type LabelInput struct {
+	Name  string `json:"name" db:"name"`
+	Color string `json:"color" db:"color"`
+}
+
+// Task defines model for Task.
+type Task struct {
+	CreatedAt   *time.Time    `json:"created_at,omitempty"`
+	Description *string       `json:"description,omitempty"`
+	EndDate     *time.Time    `json:"end_date,omitempty"`
+	Id          *int          `json:"id,omitempty"`
+	Labels      []Label       `json:"labels" db:"-"` // DBには直接対応しない
+	Name        *string       `json:"name,omitempty"`
+	Priority    *TaskPriority `json:"priority,omitempty"`
+	StartDate   *time.Time    `json:"start_date,omitempty"`
+	Status      *TaskStatus   `json:"status,omitempty"`
+	UpdatedAt   *time.Time    `json:"updated_at,omitempty"`
+}
 
 // TaskPriority defines model for Task.Priority.
 type TaskPriority string
@@ -121,27 +123,45 @@ type GetTasksParamsStatus string
 // GetTasksParamsSort defines parameters for GetTasks.
 type GetTasksParamsSort string
 
+// PutTasksIdLabelsJSONBody defines parameters for PutTasksIdLabels.
+type PutTasksIdLabelsJSONBody struct {
+	LabelIds *[]int `json:"label_ids,omitempty"`
+}
+
+// PostLabelsJSONRequestBody defines body for PostLabels for application/json ContentType.
+type PostLabelsJSONRequestBody = LabelInput
+
+// PutLabelsIdJSONRequestBody defines body for PutLabelsId for application/json ContentType.
+type PutLabelsIdJSONRequestBody = LabelInput
+
 // PostTasksJSONRequestBody defines body for PostTasks for application/json ContentType.
 type PostTasksJSONRequestBody = TaskInput
 
 // PutTasksIdJSONRequestBody defines body for PutTasksId for application/json ContentType.
 type PutTasksIdJSONRequestBody = TaskInput
 
+// PutTasksIdLabelsJSONRequestBody defines body for PutTasksIdLabels for application/json ContentType.
+type PutTasksIdLabelsJSONRequestBody PutTasksIdLabelsJSONBody
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
