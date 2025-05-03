@@ -21,7 +21,10 @@ export function multiSort(tasks: Task[], sortModel: GridSortModel) {
         aValue = priorityOrder[aValue as string] || 0;
         bValue = priorityOrder[bValue as string] || 0;
       }
-
+      
+      if (aValue === undefined && bValue === undefined) return 0;
+      if (aValue === undefined) return sort.sort === 'asc' ? -1 : 1;
+      if (bValue === undefined) return sort.sort === 'asc' ? 1 : -1;
       if (aValue < bValue) return sort.sort === 'asc' ? -1 : 1;
       if (aValue > bValue) return sort.sort === 'asc' ? 1 : -1;
     }

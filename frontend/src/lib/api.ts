@@ -10,6 +10,19 @@ const api: AxiosInstance = axios.create({
   },
 });
 
+export interface Label {
+  id: number;
+  name: string;
+  color: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LabelInput {
+  name: string;
+  color: string;
+}
+
 export interface Task {
   id: number;
   name: string;
@@ -20,6 +33,7 @@ export interface Task {
   status: 'NotStarted' | 'InProgress' | 'Completed';
   created_at: string;
   updated_at: string;
+  labels?: Label[];
 }
 
 export interface TaskInput {
@@ -31,7 +45,7 @@ export interface TaskInput {
   status: 'NotStarted' | 'InProgress' | 'Completed';
 }
 
-// APIメソッド
+// タスクのAPIメソッド
 export const getTasks = async (): Promise<Task[]> => {
   const response = await api.get('/tasks');
   return response.data.tasks;
@@ -52,4 +66,32 @@ export const updateTask = async (id: number, task: TaskInput): Promise<void> => 
 
 export const deleteTask = async (id: number): Promise<void> => {
   await api.delete(`/tasks/${id}`);
+};
+
+// ラベルのAPIメソッド
+export const getLabels = async (): Promise<Label[]> => {
+  const response = await api.get('/labels');
+  return response.data.labels;
+};
+
+export const createLabel = async (label: LabelInput): Promise<void> => {
+  await api.post('/labels', label);
+};
+
+export const getLabel = async (id: number): Promise<Label> => {
+  const response = await api.get(`/labels/${id}`);
+  return response.data;
+};
+
+export const updateLabel = async (id: number, label: LabelInput): Promise<void> => {
+  await api.put(`/labels/${id}`, label);
+};
+
+export const deleteLabel = async (id: number): Promise<void> => {
+  await api.delete(`/labels/${id}`);
+};
+
+// タスクにラベルを関連付ける
+export const updateTaskLabels = async (taskId: number, labelIds: number[]): Promise<void> => {
+  await api.put(`/tasks/${taskId}/labels`, { label_ids: labelIds });
 };
