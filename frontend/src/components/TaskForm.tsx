@@ -1,21 +1,26 @@
 'use client';
 
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createTask, TaskInput } from '@/lib/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Button,
   Dialog,
-  DialogActions,
-  DialogContent,
   DialogTitle,
+  DialogContent,
+  DialogActions,
   TextField,
-  MenuItem,
-  Select,
-  InputLabel,
+  Button,
   FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Box,
+  Typography,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DatePicker } from '@mui/x-date-pickers';
+import { createTask, TaskInput, getLabels, Label } from '@/lib/api';
+import LabelIcon from '@mui/icons-material/Label';
 
 interface TaskFormProps {
   open: boolean;
@@ -27,31 +32,54 @@ export default function TaskForm({ open, onClose }: TaskFormProps) {
   const [formData, setFormData] = useState<TaskInput>({
     name: '',
     description: '',
+    priority: 'Middle',
+    status: 'NotStarted',
     start_date: '',
     end_date: '',
-    priority: 'High',
-    status: 'NotStarted',
+  });
+  const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([]);
+  const [showLabelSelector, setShowLabelSelector] = useState(false);
+
+  // ラベル一覧を取得
+  const { data: labels } = useQuery({
+    queryKey: ['labels'],
+    queryFn: getLabels,
   });
 
   const mutation = useMutation({
-    mutationFn: createTask,
+    mutationFn: async () => {
+      await createTask(formData, selectedLabelIds);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setFormData({
+        name: '',
+        description: '',
+        priority: 'Middle',
+        status: 'NotStarted',
+        start_date: '',
+        end_date: '',
+      });
+      setSelectedLabelIds([]);
       onClose();
-      setFormData({ name: '', description: '', start_date: '', end_date: '', priority: 'High', status: 'NotStarted' });
-    },
-    onError: (error) => {
-      console.error('Error creating task:', error);
     },
   });
 
   const handleSubmit = () => {
-    mutation.mutate(formData);
+    mutation.mutate();
+  };
+
+  const handleToggleLabel = (labelId: number) => {
+    setSelectedLabelIds(prev =>
+      prev.includes(labelId)
+        ? prev.filter(id => id !== labelId)
+        : [...prev, labelId]
+    );
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>タスクの作成</DialogTitle>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>新規タスク作成</DialogTitle>
       <DialogContent>
         <TextField
           label="タスク名"
@@ -97,6 +125,7 @@ export default function TaskForm({ open, onClose }: TaskFormProps) {
           onChange={(date) => setFormData({ ...formData, end_date: date ? date.toISOString() : '' })}
           slotProps={{ textField: { fullWidth: true, margin: 'dense' } }}
         />
+        
         <TextField
           label="説明文"
           value={formData.description}
@@ -106,6 +135,49 @@ export default function TaskForm({ open, onClose }: TaskFormProps) {
           multiline
           rows={4}
         />
+
+        <Box sx={{ mt: 2 }}>
+          <Typography 
+            variant="subtitle2" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              cursor: 'pointer' 
+            }}
+            onClick={() => setShowLabelSelector(!showLabelSelector)}
+          >
+            <LabelIcon sx={{ mr: 1, fontSize: 20 }} />
+            ラベル選択 {selectedLabelIds.length > 0 && `(${selectedLabelIds.length}件選択中)`}
+          </Typography>
+          
+          {showLabelSelector && labels && (
+            <Box sx={{ mt: 1, ml: 2, maxHeight: 150, overflow: 'auto' }}>
+              {labels.map((label: Label) => (
+                <FormControlLabel
+                  key={label.id}
+                  control={
+                    <Checkbox
+                      checked={selectedLabelIds.includes(label.id)}
+                      onChange={() => handleToggleLabel(label.id)}
+                      sx={{
+                        color: label.color,
+                        '&.Mui-checked': {
+                          color: label.color,
+                        },
+                      }}
+                    />
+                  }
+                  label={label.name}
+                />
+              ))}
+              {labels.length === 0 && (
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  ラベルがありません
+                </Typography>
+              )}
+            </Box>
+          )}
+        </Box>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>キャンセル</Button>

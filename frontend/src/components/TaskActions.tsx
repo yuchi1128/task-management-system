@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateTask, deleteTask, Task, TaskInput } from '@/lib/api';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { updateTask, deleteTask, Task, TaskInput, getLabels, Label, updateTaskLabels } from '@/lib/api';
 import {
   IconButton,
   Menu,
@@ -18,10 +18,14 @@ import {
   FormControl,
   Button,
   Box,
+  Typography,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import TaskLabelSelector from './TaskLabelSelector';
+import LabelIcon from '@mui/icons-material/Label';
 
 interface TaskActionsProps {
   task: Task;
@@ -39,9 +43,26 @@ export default function TaskActions({ task }: TaskActionsProps) {
     priority: task.priority,
     status: task.status,
   });
+  
+  // ラベル選択用の状態を追加
+  const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>(
+    task.labels?.map(l => l.id) || []
+  );
+  const [showLabelSelector, setShowLabelSelector] = useState(false);
+  
+  // ラベル一覧を取得
+  const { data: labels } = useQuery({
+    queryKey: ['labels'],
+    queryFn: getLabels,
+  });
 
   const updateMutation = useMutation({
-    mutationFn: (data: TaskInput) => updateTask(task.id, data),
+    mutationFn: async (data: TaskInput) => {
+      // タスクを更新
+      await updateTask(task.id, data);
+      // ラベルを更新
+      await updateTaskLabels(task.id, selectedLabelIds);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setOpenEdit(false);
@@ -65,6 +86,14 @@ export default function TaskActions({ task }: TaskActionsProps) {
 
   const handleEditSubmit = () => {
     updateMutation.mutate(formData);
+  };
+  
+  const handleToggleLabel = (labelId: number) => {
+    setSelectedLabelIds(prev =>
+      prev.includes(labelId)
+        ? prev.filter(id => id !== labelId)
+        : [...prev, labelId]
+    );
   };
 
   return (
@@ -91,6 +120,7 @@ export default function TaskActions({ task }: TaskActionsProps) {
           削除
         </MenuItem>
       </Menu>
+
       <Dialog open={openEdit} onClose={() => setOpenEdit(false)}>
         <DialogTitle>タスクの編集</DialogTitle>
         <DialogContent>
@@ -138,6 +168,7 @@ export default function TaskActions({ task }: TaskActionsProps) {
             onChange={(date) => setFormData({ ...formData, end_date: date ? date.toISOString() : '' })}
             slotProps={{ textField: { fullWidth: true, margin: 'dense' } }}
           />
+          
           <TextField
             label="説明文"
             value={formData.description}
@@ -147,6 +178,51 @@ export default function TaskActions({ task }: TaskActionsProps) {
             multiline
             rows={4}
           />
+
+          <Box sx={{ mt: 2 }}>
+            <Typography 
+              variant="subtitle2" 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                cursor: 'pointer' 
+              }}
+              onClick={() => setShowLabelSelector(!showLabelSelector)}
+            >
+              <LabelIcon sx={{ mr: 1, fontSize: 20 }} />
+              ラベル選択 {selectedLabelIds.length > 0 && `(${selectedLabelIds.length}件選択中)`}
+            </Typography>
+            
+            {showLabelSelector && labels && (
+              <Box sx={{ mt: 1, ml: 2, maxHeight: 150, overflow: 'auto' }}>
+                {labels.map((label: Label) => (
+                  <FormControlLabel
+                    key={label.id}
+                    control={
+                      <Checkbox
+                        checked={selectedLabelIds.includes(label.id)}
+                        onChange={() => handleToggleLabel(label.id)}
+                        sx={{
+                          color: label.color,
+                          '&.Mui-checked': {
+                            color: label.color,
+                          },
+                        }}
+                      />
+                    }
+                    label={label.name}
+                  />
+                ))}
+                {labels.length === 0 && (
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    ラベルがありません
+                  </Typography>
+                )}
+              </Box>
+            )}
+          </Box>
+
+          
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenEdit(false)}>キャンセル</Button>

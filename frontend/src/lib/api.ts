@@ -51,8 +51,11 @@ export const getTasks = async (): Promise<Task[]> => {
   return response.data.tasks;
 };
 
-export const createTask = async (task: TaskInput): Promise<void> => {
-  await api.post('/tasks', task);
+export const createTask = async (task: TaskInput, labelIds?: number[]): Promise<void> => {
+  const response = await api.post('/tasks', task);
+  if (labelIds && labelIds.length > 0 && response.data && response.data.id) {
+    await updateTaskLabels(response.data.id, labelIds);
+  }
 };
 
 export const getTask = async (id: number): Promise<Task> => {
