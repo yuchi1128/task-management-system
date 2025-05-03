@@ -12,7 +12,6 @@ import (
 	"github.com/yuchi1128/task-management-system/backend/api"
 )
 
-// データベースからのタスクのマッピング用構造体
 type TaskEntity struct {
 	ID          int       `db:"id"`
 	Name        string    `db:"name"`
@@ -25,7 +24,6 @@ type TaskEntity struct {
 	UpdatedAt   time.Time `db:"updated_at"`
 }
 
-// データベースエンティティをAPI用のタスク構造体に変換
 func (e TaskEntity) ToAPITask() api.Task {
 	id := int(e.ID)
 	return api.Task{
@@ -82,7 +80,6 @@ func (h *TaskHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Executing query: %s with args: %v", sqlQuery, args)
 
-	// TaskEntityの配列を使用してデータを取得
 	var taskEntities []TaskEntity
 	err := h.db.Select(&taskEntities, sqlQuery, args...)
 	if err != nil {
@@ -91,12 +88,10 @@ func (h *TaskHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TaskEntityをapi.Taskに変換
 	var tasks []api.Task
 	for _, entity := range taskEntities {
 		task := entity.ToAPITask()
 
-		// タスクのラベル情報も取得
 		var labels []api.Label
 		query := `
 			SELECT l.* FROM labels l
@@ -138,18 +133,26 @@ func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Creating task: %+v", input)
-	_, err := h.db.Exec(
-		"INSERT INTO tasks (name, description, start_date, end_date, priority, status) VALUES ($1, $2, $3, $4, $5, $6)",
+
+	var taskID int
+	err := h.db.QueryRow(
+		"INSERT INTO tasks (name, description, start_date, end_date, priority, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
 		input.Name, input.Description, input.StartDate, input.EndDate, input.Priority, input.Status,
-	)
+	).Scan(&taskID)
+
 	if err != nil {
 		log.Printf("Error creating task: %v", err)
 		http.Error(w, "Failed to create task", http.StatusInternalServerError)
 		return
 	}
 
-	log.Println("Task created successfully")
+	log.Printf("Task created successfully with ID: %d", taskID)
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"id": taskID,
+	})
 }
 
 // タスクのラベルを更新

@@ -23,40 +23,39 @@ export const getTaskColumns = (sortModel: GridSortModel): GridColDef[] => {
       width: 150,
       sortable: false,
     },
-    // 既存のカラムの後にラベルカラムを追加
     {
       field: 'labels',
       headerName: 'ラベル',
-      width: 150,
+      width: 210,
       sortable: false,
       renderCell: (params) => {
         const labels = params.value || [];
         return (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-            {labels.slice(0, 3).map((label: Label) => (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, maxHeight: 45, overflow: 'auto', py: 1 }}>
+            {labels.map((label: Label) => (
               <Box
                 key={label.id}
                 sx={{
                   bgcolor: label.color,
                   color: '#fff',
-                  fontSize: '0.7rem',
-                  px: 1,
-                  py: 0.25,
-                  borderRadius: 10,
+                  fontSize: '0.75rem',
+                  px: 0.7,
+                  py: 0.3,
+                  borderRadius: 2.5,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  maxWidth: 60,
+                  maxWidth: 55,
+                  height: '25px',
+                  lineHeight: '18px',
+                  marginBottom: '4px',
+                  display: 'inline-flex',
+                  alignItems: 'center'
                 }}
               >
                 {label.name}
               </Box>
             ))}
-            {labels.length > 3 && (
-              <Box sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                +{labels.length - 3}
-              </Box>
-            )}
           </Box>
         );
       }
