@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import { GridColDef, GridSortModel } from '@mui/x-data-grid';
-import { Task } from '@/lib/api';
+import { Task, Label } from '@/lib/api';
 import TaskActions from '@/components/TaskActions';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
@@ -22,6 +22,44 @@ export const getTaskColumns = (sortModel: GridSortModel): GridColDef[] => {
       headerName: 'タスク名',
       width: 150,
       sortable: false,
+    },
+    // 既存のカラムの後にラベルカラムを追加
+    {
+      field: 'labels',
+      headerName: 'ラベル',
+      width: 150,
+      sortable: false,
+      renderCell: (params) => {
+        const labels = params.value || [];
+        return (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            {labels.slice(0, 3).map((label: Label) => (
+              <Box
+                key={label.id}
+                sx={{
+                  bgcolor: label.color,
+                  color: '#fff',
+                  fontSize: '0.7rem',
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 10,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: 60,
+                }}
+              >
+                {label.name}
+              </Box>
+            ))}
+            {labels.length > 3 && (
+              <Box sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                +{labels.length - 3}
+              </Box>
+            )}
+          </Box>
+        );
+      }
     },
     {
       field: 'priority',

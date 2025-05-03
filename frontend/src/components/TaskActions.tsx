@@ -17,9 +17,11 @@ import {
   InputLabel,
   FormControl,
   Button,
+  Box,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import TaskLabelSelector from './TaskLabelSelector';
 
 interface TaskActionsProps {
   task: Task;
@@ -67,9 +69,16 @@ export default function TaskActions({ task }: TaskActionsProps) {
 
   return (
     <>
-      <IconButton onClick={handleMenuOpen}>
-        <MoreVertIcon />
-      </IconButton>
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <TaskLabelSelector 
+          taskId={task.id} 
+          selectedLabelIds={task.labels?.map(l => l.id) || []}
+          compact
+        />
+        <IconButton onClick={handleMenuOpen}>
+          <MoreVertIcon />
+        </IconButton>
+      </Box>
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
