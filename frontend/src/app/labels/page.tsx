@@ -114,7 +114,7 @@ export default function LabelsPage() {
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+        <Typography variant="h4" sx={{ flex: 1, fontWeight: 'bold', fontSize: 25 }}>
           ラベル管理
         </Typography>
         <Button

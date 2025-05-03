@@ -111,8 +111,8 @@ export default function Home() {
   return (
     <Container sx={{ mt: 2, mb: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h4" sx={{ flex: 1, fontWeight: 'bold', fontSize: 30 }}>
-          TODOアプリ
+        <Typography variant="h4" sx={{ flex: 1, fontWeight: 'bold', fontSize: 25 }}>
+          タスク一覧
         </Typography>
         <Button
           variant="contained"
