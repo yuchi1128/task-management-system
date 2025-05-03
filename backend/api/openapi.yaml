@@ -97,6 +97,90 @@ paths:
       responses:
         "204":
           description: タスク削除成功
+  /labels:
+    get:
+      summary: ラベル一覧を取得
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  labels:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Label"
+    post:
+      summary: 新しいラベルを作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelInput"
+      responses:
+        "201":
+          description: 作成成功
+
+  /labels/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: 指定したIDのラベルを取得
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Label"
+    put:
+      summary: 指定したIDのラベルを更新
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelInput"
+      responses:
+        "200":
+          description: 更新成功
+    delete:
+      summary: 指定したIDのラベルを削除
+      responses:
+        "204":
+          description: 削除成功
+
+  /tasks/{id}/labels:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    put:
+      summary: タスクに関連付けられたラベルを更新
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        "200":
+          description: 更新成功
+
 components:
   schemas:
     Task:
@@ -126,6 +210,10 @@ components:
         updated_at:
           type: string
           format: date-time
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Label"
     TaskInput:
       type: object
       properties:
@@ -145,3 +233,29 @@ components:
         status:
           type: string
           enum: [NotStarted, InProgress, Completed]
+    Label:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        color:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    LabelInput:
+      type: object
+      required:
+        - name
+        - color
+      properties:
+        name:
+          type: string
+        color:
+          type: string

@@ -6,10 +6,40 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/yuchi1128/task-management-system/backend/api"
 )
+
+// データベースからのタスクのマッピング用構造体
+type TaskEntity struct {
+	ID          int       `db:"id"`
+	Name        string    `db:"name"`
+	Description string    `db:"description"`
+	StartDate   time.Time `db:"start_date"`
+	EndDate     time.Time `db:"end_date"`
+	Priority    string    `db:"priority"`
+	Status      string    `db:"status"`
+	CreatedAt   time.Time `db:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at"`
+}
+
+// データベースエンティティをAPI用のタスク構造体に変換
+func (e TaskEntity) ToAPITask() api.Task {
+	id := int(e.ID)
+	return api.Task{
+		Id:          &id,
+		Name:        &e.Name,
+		Description: &e.Description,
+		StartDate:   &e.StartDate,
+		EndDate:     &e.EndDate,
+		Priority:    (*api.TaskPriority)(&e.Priority),
+		Status:      (*api.TaskStatus)(&e.Status),
+		CreatedAt:   &e.CreatedAt,
+		UpdatedAt:   &e.UpdatedAt,
+	}
+}
 
 type TaskHandler struct {
 	db *sqlx.DB
@@ -19,7 +49,7 @@ func NewTaskHandler(db *sqlx.DB) *TaskHandler {
 	return &TaskHandler{db: db}
 }
 
-// GetTasks はタスク一覧を取得します
+// タスク一覧を取得
 func (h *TaskHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling GetTasks request")
 	query := r.URL.Query()
@@ -51,12 +81,37 @@ func (h *TaskHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	args = append(args, limit, offset)
 
 	log.Printf("Executing query: %s with args: %v", sqlQuery, args)
-	var tasks []api.Task
-	err := h.db.Select(&tasks, sqlQuery, args...)
+
+	// TaskEntityの配列を使用してデータを取得
+	var taskEntities []TaskEntity
+	err := h.db.Select(&taskEntities, sqlQuery, args...)
 	if err != nil {
 		log.Printf("Error fetching tasks: %v", err)
 		http.Error(w, "Failed to fetch tasks", http.StatusInternalServerError)
 		return
+	}
+
+	// TaskEntityをapi.Taskに変換
+	var tasks []api.Task
+	for _, entity := range taskEntities {
+		task := entity.ToAPITask()
+
+		// タスクのラベル情報も取得
+		var labels []api.Label
+		query := `
+			SELECT l.* FROM labels l
+			JOIN task_labels tl ON l.id = tl.label_id
+			WHERE tl.task_id = $1
+			ORDER BY l.name
+		`
+		err := h.db.Select(&labels, query, *task.Id)
+		if err != nil {
+			log.Printf("Error fetching labels for task %d: %v", *task.Id, err)
+		} else {
+			task.Labels = labels
+		}
+
+		tasks = append(tasks, task)
 	}
 
 	log.Printf("Fetched %d tasks", len(tasks))
@@ -72,7 +127,7 @@ func (h *TaskHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// CreateTask は新しいタスクを作成します
+// タスクを作成
 func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling CreateTask request")
 	var input api.TaskInput
@@ -97,7 +152,7 @@ func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-// GetTask は指定したIDのタスクを取得します
+// タスクのラベルを更新
 func (h *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling GetTask request")
 	idStr := r.URL.Path[len("/tasks/"):]
@@ -108,12 +163,27 @@ func (h *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var task api.Task
-	err = h.db.Get(&task, "SELECT * FROM tasks WHERE id = $1", id)
+	var taskEntity TaskEntity
+	err = h.db.Get(&taskEntity, "SELECT * FROM tasks WHERE id = $1", id)
 	if err != nil {
 		log.Printf("Error fetching task: %v", err)
 		http.Error(w, "Task not found", http.StatusNotFound)
 		return
+	}
+
+	task := taskEntity.ToAPITask()
+
+	// タスク取得後、ラベル情報も取得
+	var labels []api.Label
+	query := `
+        SELECT l.* FROM labels l
+        JOIN task_labels tl ON l.id = tl.label_id
+        WHERE tl.task_id = $1
+        ORDER BY l.name
+    `
+	err = h.db.Select(&labels, query, id)
+	if err == nil {
+		task.Labels = labels
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -152,7 +222,7 @@ func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// DeleteTask は指定したIDのタスクを削除します
+// タスクを削除
 func (h *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling DeleteTask request")
 	idStr := r.URL.Path[len("/tasks/"):]

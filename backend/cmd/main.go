@@ -27,6 +27,15 @@ func main() {
 	router.HandleFunc("/tasks/{id:[0-9]+}", taskHandler.UpdateTask).Methods("PUT")
 	router.HandleFunc("/tasks/{id:[0-9]+}", taskHandler.DeleteTask).Methods("DELETE")
 
+	// ラベルハンドラーを初期化し、ルーターに追加
+	labelHandler := handlers.NewLabelHandler(db)
+	router.HandleFunc("/labels", labelHandler.GetLabels).Methods("GET")
+	router.HandleFunc("/labels", labelHandler.CreateLabel).Methods("POST")
+	router.HandleFunc("/labels/{id:[0-9]+}", labelHandler.GetLabel).Methods("GET")
+	router.HandleFunc("/labels/{id:[0-9]+}", labelHandler.UpdateLabel).Methods("PUT")
+	router.HandleFunc("/labels/{id:[0-9]+}", labelHandler.DeleteLabel).Methods("DELETE")
+	router.HandleFunc("/tasks/{id:[0-9]+}/labels", labelHandler.UpdateTaskLabels).Methods("PUT")
+
 	// CORSミドルウェアを適用
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
