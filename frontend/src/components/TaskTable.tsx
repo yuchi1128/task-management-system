@@ -38,6 +38,7 @@ export default function TaskTable({
           onSortModelChange={onSortModelChange}
           hideFooter
           disableColumnMenu
+          rowHeight={42}
         />
       </div>
 

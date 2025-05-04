@@ -21,7 +21,10 @@ export function multiSort(tasks: Task[], sortModel: GridSortModel) {
         aValue = priorityOrder[aValue as string] || 0;
         bValue = priorityOrder[bValue as string] || 0;
       }
-
+      
+      if (aValue === undefined && bValue === undefined) return 0;
+      if (aValue === undefined) return sort.sort === 'asc' ? -1 : 1;
+      if (bValue === undefined) return sort.sort === 'asc' ? 1 : -1;
       if (aValue < bValue) return sort.sort === 'asc' ? -1 : 1;
       if (aValue > bValue) return sort.sort === 'asc' ? 1 : -1;
     }
@@ -38,6 +41,7 @@ export function filterTasks(
     status: string;
     endDateFrom: Date | null;
     endDateTo: Date | null;
+    labelIds?: number[];
   }
 ) {
   return tasks.filter((task) => {
@@ -71,6 +75,12 @@ export function filterTasks(
       }
     }
 
-    return basicFiltersPassed && dateFilterPassed;
+    let labelFilterPassed = true;
+    if (searchParams.labelIds && searchParams.labelIds.length > 0) {
+      const taskLabelIds = (task.labels || []).map(l => l.id);
+      labelFilterPassed = searchParams.labelIds.every(id => taskLabelIds.includes(id));
+    }
+
+    return basicFiltersPassed && dateFilterPassed && labelFilterPassed;
   });
 }

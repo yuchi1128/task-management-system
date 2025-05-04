@@ -27,6 +27,7 @@ export default function Home() {
     status: '',
     endDateFrom: null as Date | null,
     endDateTo: null as Date | null,
+    labelIds: [] as number[],
   });
 
   const [sortModel, setSortModel] = useState<GridSortModel>([
@@ -44,6 +45,7 @@ export default function Home() {
       status: '',
       endDateFrom: null,
       endDateTo: null,
+      labelIds: [],
     });
   };
 
@@ -52,7 +54,7 @@ export default function Home() {
     queryFn: getTasks,
   });
 
-  const handleSearchChange = (field: string, value: string | Date | null) => {
+  const handleSearchChange = (field: string, value: string | Date | null | number[]) => {
     setSearchParams((prev) => ({
       ...prev,
       [field]: value,
@@ -111,8 +113,8 @@ export default function Home() {
   return (
     <Container sx={{ mt: 2, mb: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h4" sx={{ flex: 1, fontWeight: 'bold', fontSize: 30 }}>
-          TODOアプリ
+        <Typography variant="h4" sx={{ flex: 1, fontWeight: 'bold', fontSize: 25 }}>
+          タスク一覧
         </Typography>
         <Button
           variant="contained"
