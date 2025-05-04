@@ -27,6 +27,7 @@ export default function Home() {
     status: '',
     endDateFrom: null as Date | null,
     endDateTo: null as Date | null,
+    labelIds: [] as number[],
   });
 
   const [sortModel, setSortModel] = useState<GridSortModel>([
@@ -44,6 +45,7 @@ export default function Home() {
       status: '',
       endDateFrom: null,
       endDateTo: null,
+      labelIds: [],
     });
   };
 
@@ -52,7 +54,7 @@ export default function Home() {
     queryFn: getTasks,
   });
 
-  const handleSearchChange = (field: string, value: string | Date | null) => {
+  const handleSearchChange = (field: string, value: string | Date | null | number[]) => {
     setSearchParams((prev) => ({
       ...prev,
       [field]: value,

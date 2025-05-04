@@ -11,6 +11,11 @@ import {
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import { useQuery } from '@tanstack/react-query';
+import { getLabels, Label } from '@/lib/api';
+import Checkbox from '@mui/material/Checkbox';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 interface SearchParams {
   name: string;
@@ -19,11 +24,12 @@ interface SearchParams {
   status: string;
   endDateFrom: Date | null;
   endDateTo: Date | null;
+  labelIds?: number[];
 }
 
 interface TaskFilterProps {
   searchParams: SearchParams;
-  onSearchChange: (field: string, value: string | Date | null) => void;
+  onSearchChange: (field: string, value: string | Date | null | number[]) => void;
   onResetFilters: () => void;
 }
 
@@ -32,6 +38,17 @@ export default function TaskFilter({
   onSearchChange, 
   onResetFilters 
 }: TaskFilterProps) {
+  const { data: labels = [] } = useQuery({ queryKey: ['labels'], queryFn: getLabels });
+
+  const handleLabelToggle = (labelId: number) => {
+    const prev = searchParams.labelIds || [];
+    if (prev.includes(labelId)) {
+      onSearchChange('labelIds', prev.filter(id => id !== labelId));
+    } else {
+      onSearchChange('labelIds', [...prev, labelId]);
+    }
+  };
+
   return (
     <Box sx={{ mb: 1.5 }}>
       <Typography variant="subtitle2" sx={{ mb: 0.7, fontSize: 15 }}>
@@ -114,6 +131,25 @@ export default function TaskFilter({
             },
           }}
         />
+        <FormGroup row sx={{ alignItems: 'center', minWidth: 180 }}>
+          <Typography variant="body2" sx={{ mr: 1, color: '#888' }}>ラベル:</Typography>
+          {labels.map((label: Label) => (
+            <FormControlLabel
+              key={label.id}
+              control={
+                <Checkbox
+                  checked={searchParams.labelIds?.includes(label.id) || false}
+                  onChange={() => handleLabelToggle(label.id)}
+                  sx={{
+                    color: label.color,
+                    '&.Mui-checked': { color: label.color },
+                  }}
+                />
+              }
+              label={label.name}
+            />
+          ))}
+        </FormGroup>
         <Button
           variant="outlined"
           size="small"

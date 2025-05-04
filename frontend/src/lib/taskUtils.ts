@@ -41,6 +41,7 @@ export function filterTasks(
     status: string;
     endDateFrom: Date | null;
     endDateTo: Date | null;
+    labelIds?: number[];
   }
 ) {
   return tasks.filter((task) => {
@@ -74,6 +75,12 @@ export function filterTasks(
       }
     }
 
-    return basicFiltersPassed && dateFilterPassed;
+    let labelFilterPassed = true;
+    if (searchParams.labelIds && searchParams.labelIds.length > 0) {
+      const taskLabelIds = (task.labels || []).map(l => l.id);
+      labelFilterPassed = searchParams.labelIds.every(id => taskLabelIds.includes(id));
+    }
+
+    return basicFiltersPassed && dateFilterPassed && labelFilterPassed;
   });
 }
